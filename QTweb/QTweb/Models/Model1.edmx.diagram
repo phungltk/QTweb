@@ -4,7 +4,11 @@
   <edmx:Designer xmlns="http://schemas.microsoft.com/ado/2009/11/edmx">
     <!-- Diagram content (shape and connector positions) -->
     <edmx:Diagrams>
-      <Diagram DiagramId="bb1448b707f243caa45828a97ef0fd1e" Name="Diagram1" />
+      <Diagram DiagramId="bb1448b707f243caa45828a97ef0fd1e" Name="Diagram1" >
+        <EntityTypeShape EntityType="CS4PEModel.BangSanPham" Width="1.5" PointX="3" PointY="1" />
+        <EntityTypeShape EntityType="CS4PEModel.LoaiSanPham" Width="1.5" PointX="0.75" PointY="1.5" />
+        <AssociationConnector Association="CS4PEModel.FK__BangSanPh__Loai___239E4DCF" />
+      </Diagram>
     </edmx:Diagrams>
   </edmx:Designer>
 </edmx:Edmx>
