@@ -7,6 +7,7 @@ using System.Net;
 using System.Web;
 using System.Web.Mvc;
 using QTweb.Models;
+using System.Transactions;
 
 namespace QTweb.Controllers
 {
@@ -22,23 +23,17 @@ namespace QTweb.Controllers
         }
 
         // GET: /BangSanPham/Details/5
-        public ActionResult Details(int? id)
+        public FileResult Details(string id)
         {
-            if (id == null)
-            {
-                return new HttpStatusCodeResult(HttpStatusCode.BadRequest);
-            }
-            BangSanPham bangsanpham = db.BangSanPhams.Find(id);
-            if (bangsanpham == null)
-            {
-                return HttpNotFound();
-            }
-            return View(bangsanpham);
+            var path = Server.MapPath("~/App_Data");
+            path = System.IO.Path.Combine(path, id);
+            return File(path, "images");
         }
 
         // GET: /BangSanPham/Create
         public ActionResult Create()
         {
+            
             ViewBag.Loai_id = new SelectList(db.LoaiSanPhams, "id", "TenLoai");
             return View();
         }
@@ -48,17 +43,44 @@ namespace QTweb.Controllers
         // more details see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult Create([Bind(Include="id,MaSP,TenSP,Loai_id,GiaBan,GiaGoc,GiaGop,SoLuongTon")] BangSanPham bangsanpham)
+        public ActionResult Create(BangSanPham model)
         {
+            CheckBangSanPham(model);
             if (ModelState.IsValid)
             {
-                db.BangSanPhams.Add(bangsanpham);
+                using (var scope = new TransactionScope())
+                { 
+                db.BangSanPhams.Add(model);
                 db.SaveChanges();
-                return RedirectToAction("Index");
+                if (Request.Files["HinhAnh"] != null && Request.Files["HinhAnh"].ContentLength > 0)
+                {
+                    var path = Server.MapPath("~/App_Data");
+                    path = System.IO.Path.Combine(path, model.id.ToString());
+                    Request.Files["HinhAnh"].SaveAs(path);
+                    scope.Complete();
+
+                    return RedirectToAction("Index");
+                }
+                else
+                {
+                    ModelState.AddModelError("HinhAnh", "Chua chon hinh anh");
+                }
+                }
+                
             }
 
-            ViewBag.Loai_id = new SelectList(db.LoaiSanPhams, "id", "TenLoai", bangsanpham.Loai_id);
-            return View(bangsanpham);
+            ViewBag.Loai_id = new SelectList(db.LoaiSanPhams, "id", "TenLoai", model.Loai_id);
+            return View(model);
+        }
+        private void CheckBangSanPham(BangSanPham model)
+        {
+            if (model.GiaGoc < 0)
+                ModelState.AddModelError("GiaGoc", "Gia goc phai lon hon 0");
+            if (model.GiaGoc > model.GiaBan)
+                ModelState.AddModelError("GiaBan", "Gia ban phai lon hon gia goc");
+            if (model.SoLuongTon < 0)
+                ModelState.AddModelError("SoLuongTon", "So luong ton phai lon hon 0");
+
         }
 
         // GET: /BangSanPham/Edit/5
